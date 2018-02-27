@@ -23,6 +23,8 @@
 % +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 function [fsurdat, fdomain] = CLM45SparseGridDriver(cfg_filename)
 
+clc;
+
 disp('1) Reading configuration file')
 cfg = ReadConfigurationFile(cfg_filename);
 
@@ -36,8 +38,7 @@ disp('4) Creating CLM surface dataset')
 fsurdat = CreateCLMUgridSurfdatForCLM45(lat, lon, ...
                               cfg.clm_gridded_surfdata_filename, ...
                               cfg.out_netcdf_dir, ...
-                              cfg.clm_usrdat_name, ...
-                              cfg.set_natural_veg_frac_to_one);
+                              cfg.clm_usrdat_name);
 
 disp('5) Creating CLM domain')
 fdomain = CreateCLMUgridDomainForCLM45(lat, lon, ...
