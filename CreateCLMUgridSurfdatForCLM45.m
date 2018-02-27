@@ -7,14 +7,16 @@
 %       clm_gridded_surfdata_filename = Gridded CLM surface data file
 %       out_netcdf_dir = Directory where CLM surface dataset will be saved
 %       clm_usrdat_name = User defined name for CLM dataset
+%       set_natural_veg_frac_to_one =
 %
 % Gautam Bisht (gbisht@lbl.gov)
 % 01-02-2014
 % +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 function fname_out = CreateCLMUgridSurfdatForCLM45(lati_region, long_region, ...
-                                       clm_gridded_surfdata_filename, ...
-                                       out_netcdf_dir, clm_usrdat_name)
+    clm_gridded_surfdata_filename, ...
+    out_netcdf_dir, clm_usrdat_name, ...
+    set_natural_veg_frac_to_one)
 
 fname_out = sprintf('%s/surfdata_%s_%s.nc',out_netcdf_dir,clm_usrdat_name,datestr(now, 'cyymmdd'));
 disp(['  surface_dataset: ' fname_out])
@@ -23,7 +25,7 @@ disp(['  surface_dataset: ' fname_out])
 [s,~]=system(['ls ' clm_gridded_surfdata_filename]);
 
 if (s ~= 0)
-   error(['File not found: ' clm_gridded_surfdata_filename]);
+    error(['File not found: ' clm_gridded_surfdata_filename]);
 end
 
 ncid_inp = netcdf.open(clm_gridded_surfdata_filename,'NC_NOWRITE');
@@ -125,11 +127,11 @@ for ivar = 1:length(varnames)
 end
 
 % read in global pft mask 1=valid 0=invalid
-pftmask = ncread(clm_gridded_surfdata_filename,'PFTDATA_MASK'); 
+pftmask = ncread(clm_gridded_surfdata_filename,'PFTDATA_MASK');
 
 % mark invalid gridcells as [lon, lat] [-9999, -9999]
-latixy(pftmask==0)=-9999; 
-longxy(pftmask==0)=-9999; 
+latixy(pftmask==0)=-9999;
+longxy(pftmask==0)=-9999;
 
 % allocate memoery
 ii_idx = zeros(size(long_region));
@@ -145,7 +147,7 @@ for ii=1:size(long_region,1)
                 sprintf(',%f',long_region(ii,jj)) ') has more than one cells ' ...
                 'that are equidistant.' char(10) ...
                 '           Picking the first closest grid cell.']);
-            for kk = 1:length(nearest_cell_i_idx) 
+            for kk = 1:length(nearest_cell_i_idx)
                 disp(sprintf('\t\tPossible grid cells: %f %f', ...
                     latixy(nearest_cell_i_idx(kk),nearest_cell_j_idx(kk)), ...
                     longxy(nearest_cell_i_idx(kk),nearest_cell_j_idx(kk))));
@@ -173,14 +175,6 @@ for ivar = 1:nvars
             netcdf.putVar(ncid_out,ivar-1,long_region);
         otherwise
             
-            switch varname
-                case {'PCT_URBAN','PCT_CROP','PCT_WETLAND','PCT_LAKE','PCT_GLACIER',...
-                        'PCT_GLC_MEC'}
-                    data = data*0;
-                case {'PCT_NATVEG'}
-                    data = data*0 + 100;
-            end
-            
             switch length(vardimids)
                 case 0
                     netcdf.putVar(ncid_out,ivar-1,data);
@@ -207,6 +201,9 @@ for ivar = 1:nvars
                         end
                         data_2d_new = reshape(data_2d,dims_new);
                         data_2d = data_2d_new;
+                        
+                        data_2d = PerformFractionCoverCheck(varname, data_2d,...
+                            set_natural_veg_frac_to_one);
                         
                         netcdf.putVar(ncid_out,ivar-1,data_2d);
                     else
@@ -237,6 +234,9 @@ for ivar = 1:nvars
                         end
                         data_3d_new = reshape(data_3d,dims_new);
                         data_3d = data_3d_new;
+                        
+                        data_3d = PerformFractionCoverCheck(varname, data_3d,...
+                            set_natural_veg_frac_to_one);
 
                         netcdf.putVar(ncid_out,ivar-1,data_3d);
                     else
@@ -270,7 +270,7 @@ for ivar = 1:nvars
                         end
                         data_4d_new = reshape(data_4d,dims_new);
                         data_4d = data_4d_new;
-
+                        
                         netcdf.putVar(ncid_out,ivar-1,zeros(length(size(data_4d)),1)',size(data_4d),data_4d);
                     else
                         netcdf.putVar(ncid_out,ivar-1,data);

@@ -19,6 +19,7 @@ cfg.dlat                           = 0;
 cfg.dlon                           = 0;
 cfg.lon_min                        = -999;
 cfg.lon_max                        = -999;
+cfg.set_natural_veg_frac_to_one    = 0;
 
 % Read the file
 fid = fopen (fname,'r');
@@ -54,6 +55,8 @@ while ~feof(fid)
                     cfg.lon_min = str2double(tmp_string{2});                    
                 case 'lon_max'
                     cfg.lon_max = str2double(tmp_string{2});
+                case 'set_natural_veg_frac_to_one'
+                    cfg.set_natural_veg_frac_to_one = str2double(tmp_string{2});
                 otherwise
                     error(['Unknown variable: ' tmp_string{1}])
             end
@@ -109,7 +112,6 @@ if ~(cfg.lon_min == 0 && cfg.lon_max == 360)
     error(['Stopping because lon_min and lon_max not equal to 0 and 360.'])
 end
 
-
 loc = find(cfg.site_latlon_filename == '/');
 if (~isempty(loc))
     cfg.out_netcdf_dir = cfg.site_latlon_filename(1:loc(end)-1);
@@ -117,5 +119,11 @@ else
     cfg.out_netcdf_dir = './';
 end
 
+switch cfg.set_natural_veg_frac_to_one
+    case {0,1}
+    otherwise
+        disp('Valid values for set_natural_veg_frac_to_one are 0 or 1')
+        error(['Stopping because set_natural_veg_frac_to_one is defined as ' num2str(cfg.set_natural_veg_frac_to_one)])
+end
 
 
