@@ -39,3 +39,7 @@ svn export https://svn-ccsm-inputdata.cgd.ucar.edu/trunk/inputdata/lnd/clm2/surf
 5) Creating CLM domain
   domain: 82x1_sparse_grid/domain_82x1_sparse_grid_c180227.nc
 ```
+
+## License
+
+[BSD-3](https://github.com/bishtgautam/matlab-script-for-clm-sparse-grid/License.txt)
