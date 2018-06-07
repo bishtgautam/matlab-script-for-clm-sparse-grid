@@ -1,4 +1,10 @@
 
+## Objective
+
+Scripts to create ELM/CLM surface dataset and domain NetCDF files for a list of user-specified grid cells.
+The scripts create new datasets by extracting nearest neighbor data from existing global datasets.
+The generated surface dataset and domain files are in the unstructured-grid format.
+
 ## Running the code
 
 1. Download the code
