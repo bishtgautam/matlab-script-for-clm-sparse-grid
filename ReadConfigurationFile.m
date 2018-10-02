@@ -20,6 +20,7 @@ cfg.dlon                           = 0;
 cfg.lon_min                        = -999;
 cfg.lon_max                        = -999;
 cfg.set_natural_veg_frac_to_one    = 0;
+cfg.landuse_timeseries_filename    = '';
 
 % Read the file
 fid = fopen (fname,'r');
@@ -57,6 +58,8 @@ while ~feof(fid)
                     cfg.lon_max = str2double(tmp_string{2});
                 case 'set_natural_veg_frac_to_one'
                     cfg.set_natural_veg_frac_to_one = str2double(tmp_string{2});
+                case 'landuse_timeseries_filename'
+                    cfg.landuse_timeseries_filename = tmp_string{2};
                 otherwise
                     error(['Unknown variable: ' tmp_string{1}])
             end
