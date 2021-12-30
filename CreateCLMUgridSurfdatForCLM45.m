@@ -181,31 +181,43 @@ for ivar = 1:nvars
                 case 0
                     netcdf.putVar(ncid_out,ivar-1,data);
                 case 1
-                    data = 0;
+                    if (lonlat_found)
+                        data = 0;
+                    else
+                        if (vardimids == 0)
+                            data = data(ii_idx);
+                        else
+                            data = 0;
+                        end
+                    end
                     netcdf.putVar(ncid_out,ivar-1,0,length(data),data);
                 case 2
                     if (min(vardimids) == 0)
                         
                         if (lonlat_found)
                             data_1d = sgrid_convert_2d_to_1d(vardimids, ii_idx, jj_idx, data);
+                            data_new = PerformFractionCoverCheck(varname, data_1d, set_natural_veg_frac_to_one);
+                        else
+                            data_2d = ugrid_convert_2d_to_2d(ii_idx, data);
+                            data_new = PerformFractionCoverCheck(varname, data_2d, set_natural_veg_frac_to_one);
                         end
-                        data_1d = PerformFractionCoverCheck(varname, data_1d, ...
-                            set_natural_veg_frac_to_one);
 
-                        netcdf.putVar(ncid_out,ivar-1,data_1d);
+                        netcdf.putVar(ncid_out,ivar-1,data_new);
                     else
                         netcdf.putVar(ncid_out,ivar-1,data);
                     end
                 case 3
                     if (min(vardimids) == 0)
                         if (lonlat_found)
-                            data_2d = sgrid_convert_3d_to_2d(vardimids, ii_idx, jj_idx, data);
+                            data_2d  = sgrid_convert_3d_to_2d(vardimids, ii_idx, jj_idx, data);
+                            data_new = PerformFractionCoverCheck(varname, data_2d, set_natural_veg_frac_to_one);
+                            netcdf.putVar(ncid_out,ivar-1,data_new);
+                        else
+                            data_3d  = ugrid_convert_3d_to_3d(ii_idx, data);
+                            data_new = PerformFractionCoverCheck(varname, data_3d, set_natural_veg_frac_to_one);
+                            netcdf.putVar(ncid_out,ivar-1,zeros(length(size(data_new)),1)',size(data_new),data_3d);
                         end
                         
-                        data_2d = PerformFractionCoverCheck(varname, data_2d,...
-                            set_natural_veg_frac_to_one);
-
-                        netcdf.putVar(ncid_out,ivar-1,data_2d);
                     else
                         netcdf.putVar(ncid_out,ivar-1,data);
                     end
@@ -213,6 +225,8 @@ for ivar = 1:nvars
                     if (min(vardimids) == 0)
                         if (lonlat_found)
                             data_3d = sgrid_convert_4d_to_3d(vardimids, ii_idx, jj_idx, data);
+                        else
+                            disp('error')
                         end
                         
                         netcdf.putVar(ncid_out,ivar-1,zeros(length(size(data_3d)),1)',size(data_3d),data_3d);
@@ -258,6 +272,15 @@ data_1d = reshape(data_2d,dims_new);
 end
 
 % +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+% Converts a 2D data (gridcell,:) to 1D (gridcell,:)
+% +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+function data_2d = ugrid_convert_2d_to_2d(ii_idx, data)
+
+data_2d = data(ii_idx,:);
+
+end
+
+% +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 % Converts a 3D data (lat,lon,:) to 2D (gridcell,:)
 % +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 function data_2d = sgrid_convert_3d_to_2d(vardimids, ii_idx, jj_idx, data)
@@ -282,6 +305,22 @@ else
     dims_new = [dims(1)*dims(2) 1];
 end
 data_2d = reshape(data_3d,dims_new);
+
+end
+
+% +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+% Converts a 3D data (gridcell,:,:) to 3D (gridcell,:,:)
+% +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+function data_3d = ugrid_convert_3d_to_3d(ii_idx, data)
+
+nx = size(ii_idx,1);
+ny = size(data,2);
+nz = size(data,3);
+
+data_3d = zeros(nx,ny,nz);
+for ii = 1:nx
+    data_3d(ii,:,:) = data(ii_idx(ii),:,:);
+end
 
 end
 
