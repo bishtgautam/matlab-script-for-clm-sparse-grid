@@ -85,11 +85,13 @@ for ivar = 1:nvars
     [varname,xtype,dimids,natts] = netcdf.inqVar(ncid_inp,ivar-1);
     %disp(['varname : ' varname ' ' num2str(dimids)])
     if(isempty(dimids)==0)
-        if(dimids(1) == 0 && dimids(2) == 1)
-            dimids_new =  [0 dimids(3:end)-1];
-            dimids = dimids_new;
-        else
-            dimids = dimids - 1;
+        if (lonlat_found)
+            if(dimids(1) == 0 && dimids(2) == 1)
+                dimids_new =  [0 dimids(3:end)-1];
+                dimids = dimids_new;
+            else
+                dimids = dimids - 1;
+            end
         end
     end
     varid(ivar) = netcdf.defVar(ncid_out,varname,xtype,dimids);
@@ -183,95 +185,37 @@ for ivar = 1:nvars
                     netcdf.putVar(ncid_out,ivar-1,0,length(data),data);
                 case 2
                     if (min(vardimids) == 0)
-                        data_2d = zeros(size(long_region));
-                        for ii=1:size(long_region,1)
-                            for jj=1:size(long_region,2)
-                                data_2d(ii,jj) = data(ii_idx(ii,jj),jj_idx(ii,jj));
-                            end
-                        end
                         
-                        % (lon,lat) --> % (gridcell)
-                        vardimids_new =  [0 vardimids(3:end)-1];
-                        vardimids = vardimids_new;
-                        dims = size(data_2d);
-                        if (length(dims)>2)
-                            dims_new = [dims(1)*dims(2) dims(3:end)];
-                        else
-                            dims_new = [dims(1)*dims(2) 1];
+                        if (lonlat_found)
+                            data_1d = sgrid_convert_2d_to_1d(vardimids, ii_idx, jj_idx, data);
                         end
-                        data_2d_new = reshape(data_2d,dims_new);
-                        data_2d = data_2d_new;
-                        
-                        data_2d = PerformFractionCoverCheck(varname, data_2d,...
+                        data_1d = PerformFractionCoverCheck(varname, data_1d, ...
                             set_natural_veg_frac_to_one);
-                        
-                        netcdf.putVar(ncid_out,ivar-1,data_2d);
+
+                        netcdf.putVar(ncid_out,ivar-1,data_1d);
                     else
                         netcdf.putVar(ncid_out,ivar-1,data);
                     end
                 case 3
                     if (min(vardimids) == 0)
-                        nx = size(long_region,1);
-                        ny = size(long_region,2);
-                        nz = size(data,3);
-                        data_3d = zeros(nx,ny,nz);
-                        for ii = 1:nx
-                            for jj = 1:ny
-                                for kk = 1:nz
-                                    data_3d(ii,jj,kk) = data(ii_idx(ii,jj),jj_idx(ii,jj),kk);
-                                end
-                            end
+                        if (lonlat_found)
+                            data_2d = sgrid_convert_3d_to_2d(vardimids, ii_idx, jj_idx, data);
                         end
                         
-                        % (lon,lat,:) --> % (gridcell,:)
-                        vardimids_new =  [0 vardimids(3:end)-1];
-                        vardimids = vardimids_new;
-                        dims = size(data_3d);
-                        if (length(dims)>2)
-                            dims_new = [dims(1)*dims(2) dims(3:end)];
-                        else
-                            dims_new = [dims(1)*dims(2) 1];
-                        end
-                        data_3d_new = reshape(data_3d,dims_new);
-                        data_3d = data_3d_new;
-                        
-                        data_3d = PerformFractionCoverCheck(varname, data_3d,...
+                        data_2d = PerformFractionCoverCheck(varname, data_2d,...
                             set_natural_veg_frac_to_one);
 
-                        netcdf.putVar(ncid_out,ivar-1,data_3d);
+                        netcdf.putVar(ncid_out,ivar-1,data_2d);
                     else
                         netcdf.putVar(ncid_out,ivar-1,data);
                     end
                 case 4
                     if (min(vardimids) == 0)
-                        nx = size(long_region,1);
-                        ny = size(long_region,2);
-                        nz = size(data,3);
-                        na = size(data,4);
-                        data_4d = zeros(nx,ny,nz,na);
-                        for ii = 1:nx
-                            for jj = 1:ny
-                                for kk = 1:nz
-                                    for ll = 1:na
-                                        data_4d(ii,jj,kk,ll) = data(ii_idx(ii,jj),jj_idx(ii,jj),kk,ll);
-                                    end
-                                end
-                            end
+                        if (lonlat_found)
+                            data_3d = sgrid_convert_4d_to_3d(vardimids, ii_idx, jj_idx, data);
                         end
                         
-                        % (lon,lat,:) --> % (gridcell,:)
-                        vardimids_new =  [0 vardimids(3:end)-1];
-                        vardimids = vardimids_new;
-                        dims = size(data_4d);
-                        if (length(dims)>2)
-                            dims_new = [dims(1)*dims(2) dims(3:end)];
-                        else
-                            dims_new = [dims(1)*dims(2) 1];
-                        end
-                        data_4d_new = reshape(data_4d,dims_new);
-                        data_4d = data_4d_new;
-                        
-                        netcdf.putVar(ncid_out,ivar-1,zeros(length(size(data_4d)),1)',size(data_4d),data_4d);
+                        netcdf.putVar(ncid_out,ivar-1,zeros(length(size(data_3d)),1)',size(data_3d),data_3d);
                     else
                         netcdf.putVar(ncid_out,ivar-1,data);
                     end
@@ -285,3 +229,89 @@ end
 netcdf.close(ncid_inp);
 netcdf.close(ncid_out);
 
+end
+
+% +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+% Converts a 2D data (lat,lon) to 1D (gridcell)
+% +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+function data_1d = sgrid_convert_2d_to_1d(vardimids, ii_idx, jj_idx, data)
+
+data_2d = zeros(size(ii_idx));
+
+for ii=1:size(ii_idx,1)
+    for jj=1:size(jj_idx,2)
+        data_2d(ii,jj) = data(ii_idx(ii,jj),jj_idx(ii,jj));
+    end
+end
+
+% (lon,lat) --> % (gridcell)
+vardimids_new =  [0 vardimids(3:end)-1];
+vardimids = vardimids_new;
+dims = size(data_2d);
+if (length(dims)>2)
+    dims_new = [dims(1)*dims(2) dims(3:end)];
+else
+    dims_new = [dims(1)*dims(2) 1];
+end
+data_1d = reshape(data_2d,dims_new);
+
+end
+
+% +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+% Converts a 3D data (lat,lon,:) to 2D (gridcell,:)
+% +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+function data_2d = sgrid_convert_3d_to_2d(vardimids, ii_idx, jj_idx, data)
+
+nx = size(ii_idx,1);
+ny = size(jj_idx,2);
+nz = size(data,3);
+data_3d = zeros(nx,ny,nz);
+for ii = 1:nx
+    for jj = 1:ny
+        data_3d(ii,jj,:) = data(ii_idx(ii,jj),jj_idx(ii,jj),:);
+    end
+end
+
+% (lon,lat,:) --> % (gridcell,:)
+vardimids_new =  [0 vardimids(3:end)-1];
+vardimids = vardimids_new;
+dims = size(data_3d);
+if (length(dims)>2)
+    dims_new = [dims(1)*dims(2) dims(3:end)];
+else
+    dims_new = [dims(1)*dims(2) 1];
+end
+data_2d = reshape(data_3d,dims_new);
+
+end
+
+% +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+% Converts a 4D data (lat,lon,:,:) to 3D (gridcell,:,:)
+% +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+function data_3d = sgrid_convert_4d_to_3d(vardimids, ii_idx, jj_idx, data)
+
+nx = size(ii_idx,1);
+ny = size(ii_idx,2);
+nz = size(data,3);
+na = size(data,4);
+
+data_4d = zeros(nx,ny,nz,na);
+for ii = 1:nx
+    for jj = 1:ny
+        data_4d(ii,jj,:,:) = data(ii_idx(ii,jj),jj_idx(ii,jj),:,:);
+    end
+end
+
+% (lon,lat,:) --> % (gridcell,:)
+vardimids_new =  [0 vardimids(3:end)-1];
+vardimids = vardimids_new;
+dims = size(data_4d);
+if (length(dims)>2)
+    dims_new = [dims(1)*dims(2) dims(3:end)];
+else
+    dims_new = [dims(1)*dims(2) 1];
+end
+
+data_3d = reshape(data_4d,dims_new);
+
+end
