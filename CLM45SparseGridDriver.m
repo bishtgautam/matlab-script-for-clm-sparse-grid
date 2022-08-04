@@ -21,7 +21,7 @@
 % 05-28-2015
 %
 % +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-function [fsurdat, fdomain] = CLM45SparseGridDriver(cfg_filename)
+function [fsurdat, fdomain] = CLM45SparseGridDriver(cfg_filename,mesh)
 
 disp('1) Reading configuration file')
 cfg = ReadConfigurationFile(cfg_filename);
@@ -40,11 +40,13 @@ fsurdat = CreateCLMUgridSurfdatForCLM45(lat, lon, ...
                               cfg.set_natural_veg_frac_to_one);
 
 disp('5) Creating CLM domain')
+%mesh = create_mpas_mesh_information();
 fdomain = CreateCLMUgridDomainForCLM45(lat, lon, ...
                              latv, lonv, ...
                              cfg.clm_gridded_domain_filename, ...
                              cfg.out_netcdf_dir, ...
-                             cfg.clm_usrdat_name);
+                             cfg.clm_usrdat_name, ...
+                             mesh);
 
 if (~isempty(cfg.landuse_timeseries_filename))
     disp('6) Creating CLM landuse timeseries file')
