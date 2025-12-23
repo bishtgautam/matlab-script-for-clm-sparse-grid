@@ -236,6 +236,17 @@ for ivar = 1:nvars
                     else
                         netcdf.putVar(ncid_out,ivar-1,data);
                     end
+                case 5
+                    if (min(vardimids) == 0)
+                        if (lonlat_found)
+                            data_4d = sgrid_convert_5d_to_4d(vardimids, ii_idx, jj_idx, data);
+                        else
+                            disp('error')
+                        end
+                        netcdf.putVar(ncid_out,ivar-1,zeros(length(size(data_4d)),1)',size(data_4d),data_4d);
+                    else
+                        netcdf.putVar(ncid_out,ivar-1,data);
+                    end
                 otherwise
                     disp('error')
             end
@@ -355,5 +366,37 @@ else
 end
 
 data_3d = reshape(data_4d,dims_new);
+
+end
+
+% +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+% Converts a 5D data (lat,lon,:,:,:) to 4D (gridcell,:,:,:)
+% +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+function data_4d = sgrid_convert_4d_to_3d(vardimids, ii_idx, jj_idx, data)
+
+nx = size(ii_idx,1);
+ny = size(ii_idx,2);
+nz = size(data,3);
+na = size(data,4);
+nb = size(data,5);
+
+data_5d = zeros(nx,ny,nz,na,nb);
+for ii = 1:nx
+    for jj = 1:ny
+        data_5d(ii,jj,:,:,:) = data(ii_idx(ii,jj),jj_idx(ii,jj),:,:,:);
+    end
+end
+
+% (lon,lat,:) --> % (gridcell,:)
+vardimids_new =  [0 vardimids(3:end)-1];
+vardimids = vardimids_new;
+dims = size(data_5d);
+if (length(dims)>2)
+    dims_new = [dims(1)*dims(2) dims(3:end)];
+else
+    dims_new = [dims(1)*dims(2) 1];
+end
+
+data_4d = reshape(data_5d,dims_new);
 
 end
