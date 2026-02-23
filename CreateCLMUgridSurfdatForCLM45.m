@@ -372,7 +372,7 @@ end
 % +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 % Converts a 5D data (lat,lon,:,:,:) to 4D (gridcell,:,:,:)
 % +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-function data_4d = sgrid_convert_4d_to_3d(vardimids, ii_idx, jj_idx, data)
+function data_4d = sgrid_convert_5d_to_4d(vardimids, ii_idx, jj_idx, data)
 
 nx = size(ii_idx,1);
 ny = size(ii_idx,2);
